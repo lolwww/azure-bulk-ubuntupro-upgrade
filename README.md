@@ -1,6 +1,6 @@
 # Azure Ubuntu Pro Upgrade Script
 
-This script automates the process of upgrading Ubuntu VMs in Azure to Ubuntu Pro. It finds VMs with a specific tag, updates their license type, installs the Ubuntu Pro client, and activates it.
+This script automates the process of upgrading Ubuntu VMs in Azure to Ubuntu Pro. It finds VMs with a specific tag, updates the license type, installs the Ubuntu Pro client, and activates it with auto-attach.
 
 ## Features
 
