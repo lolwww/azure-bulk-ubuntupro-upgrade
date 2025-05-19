@@ -90,7 +90,7 @@ for VM_NAME in "${VM_NAMES[@]}"; do
     
     # Run the Ubuntu Pro client installation and activation
     echo "  Installing and activating Ubuntu Pro..."
-    INSTALL_RESULT=$(az vm run-command invoke -g $RESOURCE_GROUP -n $VM_NAME --command-id RunShellScript --scripts "sudo apt install ubuntu-pro-client -y && sudo pro auto-attach")
+    INSTALL_RESULT=$(az vm run-command invoke -g $RESOURCE_GROUP -n $VM_NAME --command-id RunShellScript --scripts "sudo apt update && sudo apt install ubuntu-pro-client -y && sudo pro auto-attach")
     
     # Check if installation was successful
     if [ $? -eq 0 ]; then
