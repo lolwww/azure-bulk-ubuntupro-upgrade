@@ -56,6 +56,7 @@ STOPPED_VMS=0
 UPGRADED_VMS=0
 SKIPPED_VMS=0
 SKIPPED_NON_CANONICAL=0
+DESIRED_LICENSE_TYPE="UBUNTU_PRO"
 
 # Process each VM without using a pipe to avoid subshell issues
 VM_NAMES=($(echo "$VM_LIST" | jq -r '.[]'))
@@ -87,13 +88,41 @@ for VM_NAME in "${VM_NAMES[@]}"; do
     # Update the license type to UBUNTU_PRO
     echo "  Updating license type to UBUNTU_PRO..."
     az vm update -g $RESOURCE_GROUP -n $VM_NAME --license-type UBUNTU_PRO
+    az vm wait --resource-group $RESOURCE_GROUP  --name $VM_NAME --updated
+
+    attempt=1
+    MAX_ATTEMPTS=3
+
+    while [[ $attempt -le $MAX_ATTEMPTS ]]; do
+        echo "Checking license type (Attempt $attempt/$MAX_ATTEMPTS)..."
+
+      # Get current license type
+        CURRENT_LICENSE=$(az vm show \
+                --resource-group $RESOURCE_GROUP \
+                --name $VM_NAME \
+                --query "licenseType" \
+                --output tsv)
+
+        # Check if license matches desired value
+        if [[ "$CURRENT_LICENSE" == "$DESIRED_LICENSE_TYPE" ]]; then
+               echo "Success! License type is now: $CURRENT_LICENSE"
+               #sleep for license change to go through
+                sleep 3
+                break
+        else
+                echo "Current license: ${CURRENT_LICENSE:-None} (Waiting for $DESIRED_LICENSE_TYPE)"
+                sleep $SLEEP_DURATION
+                ((attempt++))
+        fi
+    done
     
     # Run the Ubuntu Pro client installation and activation
     echo "  Installing and activating Ubuntu Pro..."
     INSTALL_RESULT=$(az vm run-command invoke -g $RESOURCE_GROUP -n $VM_NAME --command-id RunShellScript --scripts "sudo apt update && sudo apt install ubuntu-pro-client -y && sudo pro auto-attach")
-    
+    echo $INSTALL_RESULT
+
     # Check if installation was successful
-    if [ $? -eq 0 ]; then
+    if [ $? -eq 0 ] && [[ "$INSTALL_RESULT" == *"ProvisioningState/succeeded"* ]]; then
       echo "  Ubuntu Pro client installation successful!"
       
       # Add the upgraded tag and remove the original upgrade tag
